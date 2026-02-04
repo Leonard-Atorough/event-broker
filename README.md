@@ -89,6 +89,8 @@ Here are some planned features for future releases:
 - **Persistent Event Storage**: Enable storing events to a database for replay or auditing purposes.
 - **Batch Event Publishing**: Support for publishing multiple events in a single operation.
 - **Enhanced Debugging Tools**: Provide better logging and debugging utilities for event flows.
+- **Asynchronous Event Handling**: Support for asynchronous subscribers and event processing.
+- **Event Filtering**: Allow subscribers to filter events based on custom criteria.
 
 ## License
 
