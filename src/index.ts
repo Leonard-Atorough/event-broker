@@ -80,6 +80,14 @@ class EventBroker {
     const subscribersSet = this.eventSubscriberMap.get(eventName);
     return subscribersSet ? Array.from(subscribersSet) : [];
   }
+
+  public listPayloadTypes(eventName: string): Object[] {
+    if (!this.eventSet.has(eventName)) {
+      throw new EventNotFoundException(eventName);
+    }
+    const payloadTypes = this.eventPayloadMap.get(eventName);
+    return payloadTypes ? Array.from(payloadTypes) : [];
+  }
 }
 
 class EventNotFoundException extends Error {
