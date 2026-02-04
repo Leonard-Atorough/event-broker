@@ -193,4 +193,4 @@ class EventBroker {
   }
 }
 
-export { EventBroker };
+export { EventBroker, EventNotFoundException, InvalidPayloadTypeException };
