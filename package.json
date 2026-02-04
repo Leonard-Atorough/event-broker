@@ -10,14 +10,12 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha -r tsx/register tests/**/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "^25.2.0",
+    "mocha": "^11.3.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
-  },
-  "dependencies": {
-    "mocha": "^11.3.0"
   }
 }
