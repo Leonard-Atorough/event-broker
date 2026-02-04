@@ -80,6 +80,16 @@ Returns an array of subscribers for a given event.
 - **InvalidPayloadTypeException**: Thrown when publishing a payload that doesn't match the registered type
 - **SubscriberNotFoundException**: Thrown when attempting to unsubscribe a non-existent subscriber
 
+## Future Features
+
+Here are some planned features for future releases:
+
+- **Wildcard Event Subscriptions**: Support for subscribing to multiple events using wildcard patterns.
+- **Event Prioritization**: Allow prioritizing certain subscribers to handle events before others.
+- **Persistent Event Storage**: Enable storing events to a database for replay or auditing purposes.
+- **Batch Event Publishing**: Support for publishing multiple events in a single operation.
+- **Enhanced Debugging Tools**: Provide better logging and debugging utilities for event flows.
+
 ## License
 
 MIT
