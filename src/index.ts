@@ -179,6 +179,12 @@ class EventBroker {
     return subscribersSet ? Array.from(subscribersSet) : [];
   }
 
+  /**
+   * Lists all payload types registered for a specific event.
+   * @param eventName - The name of the event.
+   * @returns An array of payload type constructors.
+   * @throws {EventNotFoundException} If the event is not registered.
+   */
   public listPayloadTypes(eventName: string): Object[] {
     if (!this.eventSet.has(eventName)) {
       throw new EventNotFoundException(eventName);
