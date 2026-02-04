@@ -33,10 +33,25 @@ class EventBroker {
   private eventPayloadMap: Map<string, Set<Object>>;
   private eventSubscriberMap: Map<string, Set<Function>>;
 
-  constructor() {
+  private static instance: EventBroker;
+
+  private constructor() {
     this.eventSet = new Set<string>();
     this.eventPayloadMap = new Map<string, Set<Object>>();
     this.eventSubscriberMap = new Map<string, Set<Function>>();
+  }
+
+  /**
+   *
+   * Gets the singleton instance of the EventBroker.
+   *
+   * @returns The singleton instance of the EventBroker.
+   */
+  public static getInstance(): EventBroker {
+    if (!EventBroker.instance) {
+      EventBroker.instance = new EventBroker();
+    }
+    return EventBroker.instance;
   }
 
   /**
