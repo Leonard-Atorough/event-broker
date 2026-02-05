@@ -10,12 +10,29 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "build": "tsc",
-    "test": "mocha --require tsx/cjs tests/**/*.test.ts"
+    "test": "nyc mocha --require tsx/cjs tests/**/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "^25.2.0",
     "mocha": "^11.3.0",
+    "nyc": "^17.1.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
+  },
+  "nyc": {
+    "extension": [
+      ".ts"
+    ],
+    "include": [
+      "src/**/*.ts"
+    ],
+    "exclude": [
+      "tests/**/*.test.ts"
+    ],
+    "reporter": [
+      "text",
+      "html"
+    ],
+    "all": true
   }
 }
