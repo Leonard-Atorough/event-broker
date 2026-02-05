@@ -1,0 +1,73 @@
+name: CI Checks
+run-name: "${{github.event.pull_request.title}} - ${{github.workflow}}"
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Create status check
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { context, github } = require('@actions/github');
+            const prNumber = context.payload.pull_request.number;
+            const repoOwner = context.repo.owner;
+            const repoName = context.repo.repo;
+
+            await github.rest.repos.createCommitStatus({
+              owner: repoOwner,
+              repo: repoName,
+              sha: context.payload.pull_request.head.sha,
+              state: 'success',
+              context: 'CI Checks',
+              description: 'All checks passed successfully!',
+            });
+
+      - name: Create status check on failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { context, github } = require('@actions/github');
+            const prNumber = context.payload.pull_request.number;
+            const repoOwner = context.repo.owner;
+            const repoName = context.repo.repo;
+
+            await github.rest.repos.createCommitStatus({
+              owner: repoOwner,
+              repo: repoName,
+              sha: context.payload.pull_request.head.sha,
+              state: 'failure',
+              context: 'CI Checks',
+              description: 'One or more checks failed. Please review the logs.',
+            });
+      
