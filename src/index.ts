@@ -167,16 +167,17 @@ class EventBroker {
    * @param payloadType - The constructor of the payload type.
    * @returns A promise that resolves to the unregister function.
    */
-  public async registerAsync<T>(eventName: string, payloadType: new () => T): Promise<() => void> {
-    return new Promise((resolve, reject) => {
-      try {
-        const unregister = this.registerEvent(eventName, payloadType);
-        resolve(unregister);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
+  // Temporarily commented out until we implement async fully
+  // public async registerAsync<T>(eventName: string, payloadType: new () => T): Promise<() => void> {
+  //   return new Promise((resolve, reject) => {
+  //     try {
+  //       const unregister = this.registerEvent(eventName, payloadType);
+  //       resolve(unregister);
+  //     } catch (error) {
+  //       reject(error);
+  //     }
+  //   });
+  // }
 
   /**
    * Lists all registered events.
