@@ -2,7 +2,7 @@ import {
   EventNotFoundException,
   InvalidPayloadTypeException,
   SubscriberNotFoundException,
-} from "./exceptions.js";
+} from "./eventExceptions.js";
 
 /**
  * EventBroker is a utility class for managing events, their payloads, and subscribers.
@@ -23,6 +23,8 @@ import {
  * @author Leonard Atorough
  * @description A TypeScript implementation of an Event Broker pattern that allows registering events with specific payload types, subscribing to events, and publishing events with type safety.
  *
+ * @implements {EventBrokerInterface}
+ *
  * @throws {EventNotFoundException} Thrown when trying to subscribe or publish to an unregistered event.
  * @throws {InvalidPayloadTypeException} Thrown when publishing an event with an invalid payload type.
  * @throws {SubscriberNotFoundException} Thrown when trying to unsubscribe a non-existent subscriber.
@@ -32,7 +34,7 @@ import {
  * @see {@link SubscriberNotFoundException}
  *
  */
-class EventBroker {
+class EventBroker implements EventBrokerInterface {
   /** Set of registered event names. Provides O(1) average time complexity for lookups. */
   private eventSet: Set<string>;
   /** Maps event names to their associated payload types. */
@@ -227,6 +229,40 @@ class EventBroker {
     const payloadTypes = this.eventPayloadMap[eventName];
     return payloadTypes ? Array.from(payloadTypes) : [];
   }
+
+  /**
+   * Gets the history of published events and their payloads.
+   * @param eventName - The name of the event to get history for. If not provided, returns history for all events.
+   * @returns A map where keys are event names and values are arrays of payloads with their timestamps.
+   * @throws {EventNotFoundException} If the specified event is not registered.
+   */
+  public getEventHistory(
+    eventName?: string,
+  ): Map<string, Array<{ payload: any; timestamp: Date }>> {
+    const historyMap = new Map<string, Array<{ payload: any; timestamp: Date }>>();
+    if (eventName) {
+      if (!this.eventSet.has(eventName)) {
+        throw new EventNotFoundException(eventName);
+      }
+      historyMap.set(eventName, this.inMemoryEventHistory[eventName] || []);
+    } else {
+      this.eventSet.forEach((event) => {
+        historyMap.set(event, this.inMemoryEventHistory[event] || []);
+      });
+    }
+    return historyMap;
+  }
+}
+
+interface EventBrokerInterface {
+  registerEvent<T>(eventName: string, payloadType: new (...args: any[]) => T): () => void;
+  subscribe<T>(eventName: string, callback: (payload: T) => void): string;
+  unsubscribe(eventName: string, subscriberId: string): boolean;
+  publish<T>(eventName: string, payload: T): void;
+  listRegisteredEvents(): string[];
+  listSubscribers(eventName: string): Function[];
+  listPayloadTypes(eventName: string): Object[];
+  getEventHistory(eventName?: string): Map<string, Array<{ payload: any; timestamp: Date }>>;
 }
 
 export {
@@ -235,3 +271,4 @@ export {
   InvalidPayloadTypeException,
   SubscriberNotFoundException,
 };
+export type { EventBrokerInterface };
