@@ -33,17 +33,25 @@ import {
  *
  */
 class EventBroker {
-  private subscriberIdCounter: number = 0;
+  /** Set of registered event names. Provides O(1) average time complexity for lookups. */
   private eventSet: Set<string>;
+  /** Maps event names to their associated payload types. */
   private eventPayloadMap: Record<string, Set<Object>>;
+  /** Maps event names to their subscribers, where each subscriber has a unique ID and a callback function. */
   private eventSubscriberMap: Record<string, Map<string, Function>>;
+  /** In-memory history of events with their payloads and timestamps. Flushed periodically into a persistent storage container. */
+  private inMemoryEventHistory: Record<string, Array<{ payload: any; timestamp: Date }>> = {};
 
+  /** Counter for generating unique subscriber IDs. */
+  private subscriberIdCounter: number = 0;
+  /** Singleton instance of the EventBroker. */
   private static instance: EventBroker;
 
   private constructor() {
     this.eventSet = new Set<string>();
     this.eventPayloadMap = {};
     this.eventSubscriberMap = {};
+    this.inMemoryEventHistory = {};
   }
 
   /**
