@@ -166,6 +166,9 @@ class EventBroker {
     subscribersSet?.forEach((callback) => {
       (callback as (payload: T) => void)(payload);
     });
+
+    this.inMemoryEventHistory[eventName] = this.inMemoryEventHistory[eventName] || [];
+    this.inMemoryEventHistory[eventName].push({ payload, timestamp: new Date() });
   }
 
   /**
