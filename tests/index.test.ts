@@ -1,4 +1,4 @@
-import { before, describe, it } from "node:test";
+import { beforeEach, describe, it } from "node:test";
 import { strict as assert } from "node:assert";
 import { EventBroker, EventNotFoundException } from "../src/index.js";
 
@@ -10,7 +10,7 @@ class TestPayload {
 }
 
 describe("EventBroker", () => {
-  before(() => {
+  beforeEach(() => {
     // Clear the singleton instance before each test
     (EventBroker as any).instance = null;
   });
@@ -46,6 +46,16 @@ describe("EventBroker", () => {
       const subscriberId = broker.subscribe("testEvent", callback);
       assert.strictEqual(typeof subscriberId, "string");
       assert.deepEqual(broker.listSubscribers("testEvent"), [callback]);
+    });
+
+    it("should unsubscribe a subscriber from an event", () => {
+      const broker = EventBroker.getInstance();
+      broker.registerEvent("testEvent", TestPayload);
+      const callback = (payload: any) => {};
+      const subscriberId = broker.subscribe("testEvent", callback);
+      const result = broker.unsubscribe("testEvent", subscriberId);
+      assert.strictEqual(result, true);
+      assert.deepEqual(broker.listSubscribers("testEvent"), []);
     });
 
     it("should throw an error when subscribing to an unregistered event", () => {
