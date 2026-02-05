@@ -41,8 +41,12 @@ class EventBroker implements EventBrokerInterface {
   private eventPayloadMap: Record<string, Set<Object>>;
   /** Maps event names to their subscribers, where each subscriber has a unique ID and a callback function. */
   private eventSubscriberMap: Record<string, Map<string, Function>>;
+
   /** In-memory history of events with their payloads and timestamps. Flushed periodically into a persistent storage container. */
-  private inMemoryEventHistory: Record<string, Array<{ payload: any; timestamp: Date }>> = {};
+  private inMemoryEventHistory: Record<
+    string,
+    Array<{ payload: any; timestamp: Date; durationMs?: number }>
+  > = {};
 
   /** Counter for generating unique subscriber IDs. */
   private subscriberIdCounter: number = 0;
@@ -154,7 +158,7 @@ class EventBroker implements EventBrokerInterface {
     if (!this.eventSet.has(eventName)) {
       throw new EventNotFoundException(eventName);
     }
-
+    const startTime = Date.now();
     const payloadTypes = this.eventPayloadMap[eventName];
     const isValidPayload = Array.from(payloadTypes || []).some(
       (type) => payload instanceof (type as new () => T),
@@ -169,28 +173,12 @@ class EventBroker implements EventBrokerInterface {
       (callback as (payload: T) => void)(payload);
     });
 
-    this.inMemoryEventHistory[eventName] = this.inMemoryEventHistory[eventName] || [];
-    this.inMemoryEventHistory[eventName].push({ payload, timestamp: new Date() });
-  }
+    const endTime = Date.now();
+    const durationMs = endTime - startTime;
 
-  /**
-   * Registers an event asynchronously with a specific payload type.
-   *
-   * @param eventName - The name of the event to register.
-   * @param payloadType - The constructor of the payload type.
-   * @returns A promise that resolves to the unregister function.
-   */
-  // Temporarily commented out until we implement async fully
-  // public async registerAsync<T>(eventName: string, payloadType: new () => T): Promise<() => void> {
-  //   return new Promise((resolve, reject) => {
-  //     try {
-  //       const unregister = this.registerEvent(eventName, payloadType);
-  //       resolve(unregister);
-  //     } catch (error) {
-  //       reject(error);
-  //     }
-  //   });
-  // }
+    this.inMemoryEventHistory[eventName] = this.inMemoryEventHistory[eventName] || [];
+    this.inMemoryEventHistory[eventName].push({ payload, timestamp: new Date(), durationMs });
+  }
 
   /**
    * Lists all registered events.
@@ -233,13 +221,16 @@ class EventBroker implements EventBrokerInterface {
   /**
    * Gets the history of published events and their payloads.
    * @param eventName - The name of the event to get history for. If not provided, returns history for all events.
-   * @returns A map where keys are event names and values are arrays of payloads with their timestamps.
+   * @returns A map where keys are event names and values are arrays of payloads with their timestamps and optional duration in milliseconds.
    * @throws {EventNotFoundException} If the specified event is not registered.
    */
   public getEventHistory(
     eventName?: string,
-  ): Map<string, Array<{ payload: any; timestamp: Date }>> {
-    const historyMap = new Map<string, Array<{ payload: any; timestamp: Date }>>();
+  ): Map<string, Array<{ payload: any; timestamp: Date; durationMs?: number }>> {
+    const historyMap = new Map<
+      string,
+      Array<{ payload: any; timestamp: Date; durationMs?: number }>
+    >();
     if (eventName) {
       if (!this.eventSet.has(eventName)) {
         throw new EventNotFoundException(eventName);
@@ -262,7 +253,9 @@ interface EventBrokerInterface {
   listRegisteredEvents(): string[];
   listSubscribers(eventName: string): Function[];
   listPayloadTypes(eventName: string): Object[];
-  getEventHistory(eventName?: string): Map<string, Array<{ payload: any; timestamp: Date }>>;
+  getEventHistory(
+    eventName?: string,
+  ): Map<string, Array<{ payload: any; timestamp: Date; durationMs?: number }>>;
 }
 
 export {
