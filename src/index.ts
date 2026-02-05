@@ -95,10 +95,9 @@ class EventBroker implements EventBrokerInterface {
     }
 
     return () => {
-      const registeredPayload = payloadType;
       const payloadTypes = this.eventPayloadMap[eventName];
-      if (payloadTypes?.has(registeredPayload)) {
-        payloadTypes.delete(registeredPayload);
+      if (payloadTypes?.has(payloadType)) {
+        payloadTypes.delete(payloadType);
         if (payloadTypes.size === 0) {
           this.eventSet.delete(eventName);
           delete this.eventPayloadMap[eventName];
@@ -112,17 +111,17 @@ class EventBroker implements EventBrokerInterface {
    * Subscribes to an event with a callback function.
    *
    * @param eventName - The name of the event to subscribe to.
-   * @param callback - The function to call when the event is published.
+   * @param onEventReceived - The function to call when the event is published.
    * @returns The subscriber ID.
    */
-  public subscribe<T>(eventName: string, callback: (payload: T) => void): string {
+  public subscribe<T>(eventName: string, onEventReceived: (payload: T) => void): string {
     if (!this.eventSet.has(eventName)) {
       throw new EventNotFoundException(eventName);
     }
 
     const subscribersMap = this.eventSubscriberMap[eventName];
     const subscriberId = this.generateNextSubscriberId();
-    subscribersMap?.set(subscriberId, callback);
+    subscribersMap?.set(subscriberId, onEventReceived);
 
     return subscriberId;
   }
@@ -140,7 +139,7 @@ class EventBroker implements EventBrokerInterface {
 
     const subscribersMap = this.eventSubscriberMap[eventName];
     if (!subscribersMap?.has(subscriberId)) {
-      throw new SubscriberNotFoundException();
+      throw new SubscriberNotFoundException(eventName, subscriberId);
     }
 
     return subscribersMap.delete(subscriberId);
@@ -161,7 +160,7 @@ class EventBroker implements EventBrokerInterface {
     const startTime = Date.now();
     const payloadTypes = this.eventPayloadMap[eventName];
     const isValidPayload = Array.from(payloadTypes || []).some(
-      (type) => payload instanceof (type as new () => T),
+      (payloadType) => payload instanceof (payloadType as new (...args: any[]) => T),
     );
 
     if (!isValidPayload) {

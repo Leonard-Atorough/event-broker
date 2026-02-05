@@ -33,8 +33,8 @@ class InvalidPayloadTypeException extends Error {
  * @property {string} name - The name of the exception.
  */
 class SubscriberNotFoundException extends Error {
-  constructor() {
-    super(`Subscriber not found.`);
+  constructor(eventName: string, subscriberId: string) {
+    super(`Subscriber with ID "${subscriberId}" not found for event "${eventName}".`);
     this.name = "SubscriberNotFoundException";
   }
 }

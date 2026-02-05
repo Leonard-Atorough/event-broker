@@ -212,8 +212,8 @@ describe("Exceptions", () => {
     assert.strictEqual(exception.message, 'Invalid payload type for event "testEvent".');
   });
   it("SubscriberNotFoundException should have correct name and message", () => {
-    const exception = new SubscriberNotFoundException();
+    const exception = new SubscriberNotFoundException("testEvent", "subscriber123");
     assert.strictEqual(exception.name, "SubscriberNotFoundException");
-    assert.strictEqual(exception.message, "Subscriber not found.");
+    assert.strictEqual(exception.message, 'Subscriber with ID "subscriber123" not found for event "testEvent".');
   });
 });
