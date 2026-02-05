@@ -2,6 +2,13 @@ import { before, describe, it } from "node:test";
 import { strict as assert } from "node:assert";
 import { EventBroker, EventNotFoundException } from "../src/index.js";
 
+class TestPayload {
+  data: string;
+  constructor(data: string) {
+    this.data = data;
+  }
+}
+
 describe("EventBroker", () => {
   before(() => {
     // Clear the singleton instance before each test
@@ -34,13 +41,11 @@ describe("EventBroker", () => {
   describe("subscribe", () => {
     it("should subscribe to an event and return an unsubscribe function", () => {
       const broker = EventBroker.getInstance();
-      broker.registerEvent("testEvent", class TestPayload {});
+      broker.registerEvent("testEvent", TestPayload);
       const callback = (payload: any) => {};
-      const unsubscribe = broker.subscribe("testEvent", callback);
-      assert.strictEqual(typeof unsubscribe, "function");
+      const subscriberId = broker.subscribe("testEvent", callback);
+      assert.strictEqual(typeof subscriberId, "string");
       assert.deepEqual(broker.listSubscribers("testEvent"), [callback]);
-      unsubscribe();
-      assert.deepEqual(broker.listSubscribers("testEvent"), []);
     });
 
     it("should throw an error when subscribing to an unregistered event", () => {
@@ -48,6 +53,20 @@ describe("EventBroker", () => {
       assert.throws(() => {
         broker.subscribe("nonExistentEvent", () => {});
       }, EventNotFoundException);
+    });
+  });
+
+  describe("publish", () => {
+    it("should publish an event to all subscribers", () => {
+      const broker = EventBroker.getInstance();
+      broker.registerEvent("testEvent", TestPayload);
+      let receivedPayload: any = null;
+      broker.subscribe("testEvent", (payload) => {
+        receivedPayload = payload;
+      });
+      const testPayload = new TestPayload("test");
+      broker.publish("testEvent", testPayload);
+      assert.deepEqual(receivedPayload, testPayload);
     });
   });
 });

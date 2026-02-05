@@ -1,4 +1,8 @@
-import { EventNotFoundException, InvalidPayloadTypeException } from "./exceptions.js";
+import {
+  EventNotFoundException,
+  InvalidPayloadTypeException,
+  SubscriberNotFoundException,
+} from "./exceptions.js";
 
 /**
  * EventBroker is a utility class for managing events, their payloads, and subscribers.
@@ -29,9 +33,10 @@ import { EventNotFoundException, InvalidPayloadTypeException } from "./exception
  *
  */
 class EventBroker {
+  private subscriberIdCounter: number = 0;
   private eventSet: Set<string>;
   private eventPayloadMap: Record<string, Set<Object>>;
-  private eventSubscriberMap: Record<string, Set<Function>>;
+  private eventSubscriberMap: Record<string, Map<string, Function>>;
 
   private static instance: EventBroker;
 
@@ -53,6 +58,11 @@ class EventBroker {
     return EventBroker.instance;
   }
 
+  private generateNextSubscriberId(): string {
+    return `subscriber_${++this.subscriberIdCounter}`;
+    // preincrement to ensure the first subscriber gets ID "subscriber_1"
+  }
+
   /**
    * Registers an event with a specific payload type.
    *
@@ -60,11 +70,11 @@ class EventBroker {
    * @param payloadType - The constructor of the payload type.
    * @returns A function to unregister the event.
    */
-  public registerEvent<T>(eventName: string, payloadType: new () => T): () => void {
+  public registerEvent<T>(eventName: string, payloadType: new (...args: any[]) => T): () => void {
     if (!this.eventSet.has(eventName)) {
       this.eventSet.add(eventName);
       this.eventPayloadMap[eventName] = new Set<Object>([payloadType]);
-      this.eventSubscriberMap[eventName] = new Set<Function>();
+      this.eventSubscriberMap[eventName] = new Map<string, Function>();
     } else {
       const payloadTypes = this.eventPayloadMap[eventName];
       payloadTypes?.add(payloadType);
@@ -89,23 +99,37 @@ class EventBroker {
    *
    * @param eventName - The name of the event to subscribe to.
    * @param callback - The function to call when the event is published.
-   * @returns A function to unsubscribe from the event.
+   * @returns The subscriber ID.
    */
-  public subscribe<T>(eventName: string, callback: (payload: T) => void): () => void {
+  public subscribe<T>(eventName: string, callback: (payload: T) => void): string {
     if (!this.eventSet.has(eventName)) {
       throw new EventNotFoundException(eventName);
     }
 
-    const subscribersSet = this.eventSubscriberMap[eventName];
-    subscribersSet?.add(callback);
+    const subscribersMap = this.eventSubscriberMap[eventName];
+    const subscriberId = this.generateNextSubscriberId();
+    subscribersMap?.set(subscriberId, callback);
 
-    return () => {
-      const registeredCallback = callback;
-      const subscribersSet = this.eventSubscriberMap[eventName];
-      if (subscribersSet?.has(registeredCallback)) {
-        subscribersSet.delete(registeredCallback);
-      }
-    };
+    return subscriberId;
+  }
+
+  /**
+   *
+   * @param eventName - The name of the event to unsubscribe from.
+   * @param subscriberId - The id of the subscription. Supplied when subscribe was called.
+   * @returns - True if the subscriber was successfully unsubscribed, false otherwise.
+   */
+  public unsubscribe(eventName: string, subscriberId: string): boolean {
+    if (!this.eventSet.has(eventName)) {
+      throw new EventNotFoundException(eventName);
+    }
+
+    const subscribersMap = this.eventSubscriberMap[eventName];
+    if (!subscribersMap?.has(subscriberId)) {
+      throw new SubscriberNotFoundException();
+    }
+
+    return subscribersMap.delete(subscriberId);
   }
 
   /**
@@ -174,8 +198,8 @@ class EventBroker {
     if (!this.eventSet.has(eventName)) {
       throw new EventNotFoundException(eventName);
     }
-    const subscribersSet = this.eventSubscriberMap[eventName];
-    return subscribersSet ? Array.from(subscribersSet) : [];
+    const subscribersMap = this.eventSubscriberMap[eventName];
+    return subscribersMap ? Array.from(subscribersMap.values()) : [];
   }
 
   /**
@@ -193,4 +217,9 @@ class EventBroker {
   }
 }
 
-export { EventBroker, EventNotFoundException, InvalidPayloadTypeException };
+export {
+  EventBroker,
+  EventNotFoundException,
+  InvalidPayloadTypeException,
+  SubscriberNotFoundException,
+};
